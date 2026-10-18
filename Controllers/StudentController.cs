@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StudentApi.Data;
 using StudentApi.Models;
+using StudentApi.Models.Dtos;
 
 
 namespace StudentApi.Controllers
@@ -32,14 +33,49 @@ namespace StudentApi.Controllers
         public async Task<ActionResult<Student>> GetById(int id)
         {
             var student = await appContext.Students.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id);
-            if(student is null)
+            if (student is null)
             {
                 return NotFound();
             }
             return Ok(student);
         }
+        [HttpPost]
+        public async Task<ActionResult<Student>> Create([FromBody] StudentRequest studentRequest)
+        {
+            var student = new Student
+            {
+                Name = studentRequest.Name.Trim(),
+                Email = studentRequest.Email.Trim()
+            };
 
-                
+            appContext.Students.Add(student);
+            await appContext.SaveChangesAsync();
+
+            return CreatedAtAction(
+                    nameof(GetById),
+                    new
+                    {
+                        id = student.Id,
+                    }, student
+                );
+        }
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Update(int id, [FromBody] StudentRequest studentRequest)
+        {
+            var std = await appContext.Students.FindAsync(id);
+            if (std is null)
+            {
+                return NotFound();
+            }
+
+            std.Name = studentRequest.Name.Trim();
+            std.Email = studentRequest.Email.Trim();
+
+            await appContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
 
 
     }
